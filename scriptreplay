@@ -1,0 +1,324 @@
+#!/usr/bin/env perl
+
+#
+# scriptreplay - play back typescript of terminal session
+#
+#
+# Author(s):	
+#     Joey Hess <joey@kitenet.net>
+#		Marc Schoechlin <ms@256bit.org>
+#		Hendrik Brueckner <hb-perl@256bit.org>
+#
+#
+use strict;
+use warnings;
+use File::Basename;
+use Getopt::Long;
+use IO::Select;
+use POSIX;
+use Term::ReadKey;
+
+
+sub main();
+sub show_usage();
+sub __exit($;@);
+sub open_expr($);
+
+
+my $progname = fileparse($0, qr/\.[^.]+/);
+$SIG{__WARN__} = sub { print STDERR "$progname: $_[0]"; };
+$SIG{__DIE__}  = sub { print STDERR "$progname: $_[0]"; __exit 254; };
+
+
+sub main() {
+	my $time_file;
+	my $script_file;
+	my $accel = 1;
+
+	# parse command line options
+	unless (GetOptions("t|timing=s"     => \$time_file,
+			   "a|accelerate=f" => \$accel,
+			   "<>"		    => sub { $script_file = shift; },
+			   "h|help"	    => sub { show_usage(); exit 0; })) {
+		show_usage();
+		exit 1;
+	}
+
+	# check parameters
+	die "You need to specify a script file (see also option '-h')\n" unless defined $script_file;
+	die "Acceleration factor must be greater than 0\n" unless $accel > 0;
+
+	# open script_file
+	open (SCRIPT, open_expr($script_file))
+		or die "Cannot open typescript file $script_file: $!\n";
+	unless (<SCRIPT> =~ /^Script.*:.*/i) {
+		die "$script_file is not a valid typescript from script(1)\n";
+	}
+
+	# automatic discovery of a (compressed) time_file
+	unless ($time_file) {
+		my $tmp = $script_file;
+		if ($tmp =~ /(\.(?:bz2|gz|lz|lzma))$/) {
+			$tmp =~ s/($1)$/.timing$1/;
+		} else {
+			$tmp = $tmp . ".timing";
+		}
+		$time_file = $tmp if -r $tmp;
+	}
+
+	# open time_file
+	if ($time_file) {
+		open (TIMING, open_expr($time_file))
+			or die "Cannot open timing data file $time_file: $!\n";
+	}
+
+	# enable autoflush
+	select STDERR; $| = 1;
+	select STDOUT; $| = 1;
+
+	# set up acceleration
+	$accel = 1 / $accel;
+
+	# Term::ReadKey setup
+	ReadMode('noecho');
+	ReadMode('cbreak');
+
+	# declare timing and replay block variables
+	my $replay_time = 0;			# time of the typescript
+	my $accel_time  = 0;			# accelerated typescript
+	my ($block, $oldblock)  = ("", "");	# script block
+	my ($delay, $blocksize) = (.005, 1);	# timing parameter
+
+	# install signal handler to reset Term::ReadKey modes
+	my $sigaction = POSIX::SigAction->new(sub { __exit 0; },
+					      POSIX::SigSet->new(),
+					      &POSIX::SA_NODEFER);
+	POSIX::sigaction(&POSIX::SIGINT,  $sigaction);
+	POSIX::sigaction(&POSIX::SIGTERM, $sigaction);
+
+	# use select for timeouts and to monitor stdin activity
+	my $select = IO::Select->new();
+	$select->add(\*STDIN);
+
+	# start replaying...
+	REPLAY: while (1) {
+		if ($time_file) {
+			my $timing_line = <TIMING>;
+			last REPLAY unless defined $timing_line;
+			last REPLAY unless $timing_line =~ /([.\d]+)\s+(\d+)/;
+			($delay, $blocksize) = ($1, $2);
+		}
+
+		# calculate timeout
+		my $timeout = $delay * $accel**3;
+
+		# count delays (may vary depending on select)
+		$replay_time += $delay;
+		$accel_time  += $timeout;
+
+		# Sleep, unless the delay is really tiny. Really tiny delays
+		# cannot be accurately done, because the system calls in this
+		# loop will have more overhead. The 0.0001 is arbitrary, but
+		# works fairly well.
+		my @fdset = $select->can_read($timeout) if $timeout > 0.0001;
+
+		# handle read terminal keys
+		if (@fdset) {
+			my $key = ReadKey(0);
+
+			$accel += 0.1 if $key =~ /-|d/i;
+			$accel -= 0.1 if $key =~ /\+|i/i && $accel > 0.11;
+			last REPLAY   if $key =~ /q|f/i;
+			if ($key =~ /s|p/i) {
+				while (ReadKey(0) =~ /c/i) { next; }
+			}
+		}
+
+		# read typescript
+		my $cnt;
+		unless (defined($cnt = read(SCRIPT, $block, $blocksize))) {
+			warn "read failure on script file ($script_file): $!";
+			last REPLAY;
+		}
+		last REPLAY unless $cnt;	# EoF
+
+		print $oldblock;		# write delayed block
+		$oldblock = $block;
+	}
+	print $oldblock;
+
+	close TIMING if $time_file;
+	close SCRIPT;
+
+	__exit 0, $replay_time, $accel_time;
+}
+
+sub show_usage() {
+	print <<EoUsage;
+Usage: $progname [-h|--help]
+       $progname [-a <num>] [-t <timing file>] <typescript>
+
+Options:
+       -t, --timing		Path to timing data file.
+       -a, --accelerate		Acceleration of typescript timing (> 0).
+       -h, --help		Print this help, then exit.
+
+Detailed Documentation:
+
+       perldoc $0
+
+EoUsage
+}
+
+sub __exit($;@) {
+	my $exitcode = shift();
+	my @times    = @_;
+
+	ReadMode('normal');
+	if (@times) {
+		printf "\n$progname: %s %5.0f seconds (%2.0f minutes)\n",
+			"typescript time (normal):", $times[0], $times[0]/60;
+		printf "$progname: %s %5.0f seconds (%2.0f minutes)\n",
+			"typescript time (accel) :",
+			$times[1], $times[1]/60;
+	}
+	exit $exitcode;
+}
+
+sub open_expr($) {
+	$_ = shift();
+
+	/\.bz2$/i and return "bzcat $_|";	# block-sorting file compressor
+	/\.gz$/i  and return "zcat  $_|";	# Lempel-Ziv coding (LZ77)
+	/\.lz(?:ma)?$/i and return "lzcat $_|";	# Lempel-Ziv-Markov chain
+
+	return "<$_";
+}
+
+# start script
+&main();
+
+__DATA__
+
+=head1 NAME
+
+scriptreplay - play back typescript of terminal session
+
+=head1 SYNOPSIS
+
+B<scriptreplay> -h|--help
+
+B<scriptreplay> [-a|--accelerate <num>] [-t|--timing <timingfile>] <typescript>
+
+=head1 DESCRIPTION
+
+B<scriptreplay> replays a typescript of a terminal session; optionally, using
+timing data to ensure realistic typing and output delays.
+
+The timing data consists of two fields, separated by a space. The first field
+indicates how much time elapsed since the previous output. The second field
+indicates how many characters were output this time.
+
+I<typescript> is the path to the typescript file. If the file
+I<typescript>.timing exists then it is automatically used as timing data
+file.  Use parameter B<-t> or B<--timing> to specify an alternative timing data
+file.
+
+This version of B<scriptreplay> supports reading of compressed I<typescript>
+files. If I<timingfile> is not specified, B<scriptreplay> tries to open a
+timing data file that uses the same compression algorithm as I<typescript>.
+The decompression method is determined by examining the file extension of the
+I<typescript> file. Recognized file extensions of compressed I<typescript>
+files are: C<bz2>, C<gz>, C<lz> or C<lzma>.
+
+=head2 Controlling the playback
+
+=over 4
+
+=item *
+
+"-" or "d" decreases display speed.
+
+=item *
+
+"+" or "i" increases display speed.
+
+=item *
+
+"s" or "p" pauses the playback; and "c" continues again.
+
+=item *
+
+"f" or "q" stops the playback and exits B<scriptreplay>.
+
+=back
+
+Pressing any other key jumps to the next output (useful if there is no output
+activity due to a long delay).
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-a>, B<--accelerate> I<num>
+
+Accelerates timing by factor I<num>. I<num> must be greater than 0.
+A I<num> value less than 1 slows down the playback speed; and a value
+greater than 1 increases the playback speed.
+
+=item B<-t>, B<--timing> I<timingfile>
+
+Specify the file path to the timing data file.
+
+=back
+
+=head1 EXAMPLES
+
+=head2 Create a new typescript with timing data
+
+ user@caladan:~$ script -t typescript 2>typescript.timing
+ Script started, file is typescript
+ user@caladan:~$ ls
+   ...
+ user@caladan:~$ exit
+ Script done, file is typescript
+
+=head2 Replay a typescript
+
+ user@arrakis:~$ scriptreplay typescript
+ user@caladan:~$ ls
+   ...
+ user@caladan:~$ exit
+
+ scriptreplay: typescript time (normal):    14 seconds ( 0 minutes)
+ scriptreplay: typescript time (accel) :     1 seconds ( 0 minutes)
+
+
+=head1 NOTES
+
+The playback might not work properly if the typescript contains output from
+applications that have been recorded with different termio settings and/or
+terminal window sizes.
+
+=head1 COPYRIGHT
+
+This program is in the public domain.
+
+=head1 AUTHORS
+
+Joey Hess <joey@kitenet.net>
+
+Marc Schoechlin <ms@256bit.org>
+
+Hendrik Brueckner <hb-perl@256bit.org>
+
+=head1 SEE ALSO
+
+script(1),
+bzcat(1),
+zcat(1),
+lzcat(1)
+
+=cut
+__END__
+# vim: set ai noet ts=8 sw=8 tw=80:

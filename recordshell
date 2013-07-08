@@ -1,0 +1,32 @@
+#!/bin/bash
+
+LOGDIR="/var/log/recordshell/"
+LOGGING_PID="$$"
+FILEPREFIX="$LOGDIR/$(date '+%Y-%m-%d')/$(date '+%Y-%m-%d_%H-%M-%S')-$LOGGING_PID"; 
+
+mkdir -p $FILEPREFIX
+if [ "$?" != "0" ];then
+   echo "Unable to create directory structure $FILEPREFIX"
+   exit 1
+fi
+
+logger -s -t recordshell "[$LOGGING_PID] Starting logged shell session: ${FILEPREFIX}/typescript, ${FILEPREFIX}/timing (sudo user $SUDO_USER, sudo command $SUDO_COMMAND)"
+script -q -f --timing=${FILEPREFIX}/timing ${FILEPREFIX}/typescript
+logger -s -t recordshell "[$LOGGING_PID] Finished logged shell session: ${FILEPREFIX}/typescript, ${FILEPREFIX}/timing (sudo user $SUDO_USER, sudo command $SUDO_COMMAND)"
+
+gzip ${FILEPREFIX}/typescript
+if [ "$?" != "0" ];then
+   logger -s -t recordshell "[$LOGGING_PID] compression of ${FILEPREFIX}/typescript failed"
+else
+   logger -s -t recordshell "[$LOGGING_PID] compression of ${FILEPREFIX}/typescript successful (MD5SUM $(md5sum ${FILEPREFIX}/typescript.gz|awk '{print $1}'))"
+fi
+
+gzip ${FILEPREFIX}/timing
+if [ "$?" != "0" ];then
+   logger -s -t recordshell "[$LOGGING_PID] compression of ${FILEPREFIX}/timing failed"
+else
+   logger -s -t recordshell "[$LOGGING_PID] compression of ${FILEPREFIX}/timing successful (MD5SUM $(md5sum ${FILEPREFIX}/timing.gz|awk '{print $1}'))"
+fi
+
+logger -s -t recordshell "[$LOGGING_PID] execute to review : scriptreplay -t ${FILEPREFIX}/timing.gz ${FILEPREFIX}/typescript.gz"
+
