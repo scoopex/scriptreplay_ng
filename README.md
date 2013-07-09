@@ -7,10 +7,10 @@ Installation
  * Install "scriptreplay" and "recordsession" to /usr/local/sbin
  * Add /usr/local/sbin to $PATH of the user
  * Add the follwing lines via "visudo"
-   ```
-<user> ALL=NOPASSWD: /usr/local/sbin/scriptreplay
-<user> ALL=NOPASSWD: /usr/local/sbin/recordsession
-   ```
+```
+<user> ALL=(ALL) NOPASSWD: /usr/local/sbin/scriptreplay
+<user> ALL=(ALL) NOPASSWD: /usr/local/sbin/recordsession
+```
 
 
 Usage
