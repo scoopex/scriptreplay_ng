@@ -8,8 +8,8 @@ Installation
  * Add /usr/local/sbin to $PATH of the user
  * Add the follwing lines via "visudo"
    ```
-   <user> ALL=NOPASSWD: /usr/local/sbin/scriptreplay
-   <user> ALL=NOPASSWD: /usr/local/sbin/recordsession
+<user> ALL=NOPASSWD: /usr/local/sbin/scriptreplay
+<user> ALL=NOPASSWD: /usr/local/sbin/recordsession
    ```
 
 
@@ -18,11 +18,11 @@ Usage
 
  * Start session
    ```
-   sudo recordsession
+sudo recordsession
    ```
  * Replay session
    ```
-   sudo scriptreplay -t /var/log/recordshell//2013-07-08/2013-07-08_17-39-41-27336/timing.gz /var/log/recordshell//2013-07-08/2013-07-08_17-39-41-27336/typescript.gz
+sudo scriptreplay -t /var/log/recordshell//2013-07-08/2013-07-08_17-39-41-27336/timing.gz /var/log/recordshell//2013-07-08/2013-07-08_17-39-41-27336/typescript.gz
    ```
 
 Documentation 

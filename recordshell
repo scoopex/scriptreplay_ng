@@ -1,8 +1,18 @@
 #!/bin/bash
 
-LOGDIR="/var/log/recordshell/"
+LOGDIR="/var/log/recordshell"
 LOGGING_PID="$$"
 FILEPREFIX="$LOGDIR/$(date '+%Y-%m-%d')/$(date '+%Y-%m-%d_%H-%M-%S')-$LOGGING_PID"; 
+EXTRA_ARGS="-c 'su -c /bin/bash $SUDO_USER'"
+
+CFG_FILE="/etc/recordshell"
+
+if ( bash $CFG_FILE &> /dev/null );then
+   source $CFG_FILE;
+else
+   echo "error in configfile  $CFG_FILE"
+   exit 1
+fi
 
 mkdir -p $FILEPREFIX
 if [ "$?" != "0" ];then
@@ -10,9 +20,17 @@ if [ "$?" != "0" ];then
    exit 1
 fi
 
-logger -s -t recordshell "[$LOGGING_PID] Starting logged shell session: ${FILEPREFIX}/typescript, ${FILEPREFIX}/timing (sudo user $SUDO_USER, sudo command $SUDO_COMMAND)"
-script -q -f --timing=${FILEPREFIX}/timing ${FILEPREFIX}/typescript
-logger -s -t recordshell "[$LOGGING_PID] Finished logged shell session: ${FILEPREFIX}/typescript, ${FILEPREFIX}/timing (sudo user $SUDO_USER, sudo command $SUDO_COMMAND)"
+SUDO_MSG=""
+if [ -n "$SUDO_USER" ];then
+   SUDO_MSG=", (sudo user $SUDO_USER, sudo command $SUDO_COMMAND)"
+fi
+echo "*********************************"
+logger -s -t recordshell "[$LOGGING_PID] Starting logged shell session: ${FILEPREFIX}/{typescript,timing} $SUDO_MSG"
+set -x
+script $EXTRA_ARGS -e -q -f -t ${FILEPREFIX}/typescript 2>${FILEPREFIX}/timing
+set +x 
+logger -s -t recordshell "[$LOGGING_PID] Finished logged shell session: ${FILEPREFIX}/{typescript,timing} $SUDO_MSG"
+echo "*********************************"
 
 gzip ${FILEPREFIX}/typescript
 if [ "$?" != "0" ];then
@@ -27,6 +45,5 @@ if [ "$?" != "0" ];then
 else
    logger -s -t recordshell "[$LOGGING_PID] compression of ${FILEPREFIX}/timing successful (MD5SUM $(md5sum ${FILEPREFIX}/timing.gz|awk '{print $1}'))"
 fi
-
-logger -s -t recordshell "[$LOGGING_PID] execute to review : scriptreplay -t ${FILEPREFIX}/timing.gz ${FILEPREFIX}/typescript.gz"
+logger -s -t recordshell "[$LOGGING_PID] review session with: scriptreplay -t ${FILEPREFIX}/{timing.gz,typescript.gz}"
 
