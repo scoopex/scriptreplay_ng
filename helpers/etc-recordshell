@@ -1,0 +1,7 @@
+# copy me to /etc/recordshell
+
+LOGDIR="/var/log/recordshell"
+LOGGING_PID="$$"
+FILEPREFIX="$LOGDIR/$(date '+%Y-%m-%d')/$(date '+%Y-%m-%d_%H-%M-%S')-$LOGGING_PID";
+EXTRA_ARGS="-c 'su -c /bin/bash $SUDO_USER'"
+
