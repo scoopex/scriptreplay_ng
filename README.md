@@ -10,7 +10,7 @@ Installation
 
 ```
 <user> ALL=(ALL) NOPASSWD: /usr/local/sbin/scriptreplay
-<user> ALL=(ALL) NOPASSWD: /usr/local/sbin/recordsession
+<user> ALL=(ALL) NOPASSWD: /usr/local/sbin/recordshell
 ```
 
 
