@@ -3,9 +3,24 @@
 LOGDIR="/var/log/recordshell"
 LOGGING_PID="$$"
 FILEPREFIX="$LOGDIR/$(date '+%Y-%m-%d')/$(date '+%Y-%m-%d_%H-%M-%S')-$LOGGING_PID"; 
-EXTRA_ARGS="-c 'su -c /bin/bash $SUDO_USER'"
-
 CFG_FILE="/etc/recordshell"
+
+TARGET_USER="$1"
+
+#EXTRA_ARGS="-c 'su -c \"/bin/bash -l\" - $TARGET_USER'"
+EXTRA_ARGS="-c 'su -s /bin/bash - $TARGET_USER'"
+
+if [ "`whoami`" != "root" ];then
+   set -x
+   exec sudo $0 "`whoami`"
+   set +x
+fi
+
+
+if [ -z "$TARGET_USER" ];then
+   echo "$0 <target_user>"
+   exit 1
+fi
 
 if ( bash $CFG_FILE &> /dev/null );then
    source $CFG_FILE;
@@ -27,7 +42,8 @@ fi
 echo "*********************************"
 logger -s -t recordshell "[$LOGGING_PID] Starting logged shell session: ${FILEPREFIX}/{typescript,timing} $SUDO_MSG"
 set -x
-script $EXTRA_ARGS -e -q -f -t ${FILEPREFIX}/typescript 2>${FILEPREFIX}/timing
+
+eval script $EXTRA_ARGS -e -q -f -t ${FILEPREFIX}/typescript 2>${FILEPREFIX}/timing
 set +x 
 logger -s -t recordshell "[$LOGGING_PID] Finished logged shell session: ${FILEPREFIX}/{typescript,timing} $SUDO_MSG"
 echo "*********************************"
