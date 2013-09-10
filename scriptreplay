@@ -105,7 +105,13 @@ sub main() {
 		if ($time_file) {
 			my $timing_line = <TIMING>;
 			last REPLAY unless defined $timing_line;
-			last REPLAY unless $timing_line =~ /([.\d]+)\s+(\d+)/;
+         # Skip this line if this line contains shell tracing information
+         next REPLAY if $timing_line =~ /^\+\+/;
+         # This line doesn't seem to a valid timing, somthing is wrong here
+         if ($timing_line !~ /([.\d]+)\s+(\d+)/){
+            print "ERROR: malformed timing line '".$timing_line."'\n";
+            last REPLAY
+         }
 			($delay, $blocksize) = ($1, $2);
 		}
 
