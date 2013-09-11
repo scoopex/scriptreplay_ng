@@ -10,11 +10,13 @@ Usage
 
  * Record session
    ```
-script -t /tmp/foo/2013-09-11_18-47-45.user1.11931.typescript 2> /tmp/foo/2013-09-11_18-47-45.user1.11931.timing
+script -t /tmp/foo/2013-09-11_18-47-45.user1.11931.typescript \
+          2> /tmp/foo/2013-09-11_18-47-45.user1.11931.timing
    ```
  * Replay session
    ```
-scriptreplay -t /tmp/foo/2013-09-11_18-47-45.user1.11931.timing /tmp/foo/2013-09-11_18-47-45.user1.11931.typescript
+scriptreplay -t /tmp/foo/2013-09-11_18-47-45.user1.11931.timing \
+          /tmp/foo/2013-09-11_18-47-45.user1.11931.typescript
    ```
 
 
@@ -125,8 +127,10 @@ The logged information can also be forwarded to secured logging servers using st
    * helpers/auditshell_create_sessionfiles
  * Set permission and owner
    ```
-chown root:root /usr/local/bin/{scriptreplay,auditshell,auditshell_create_sessionfiles}
-chmod 755 /usr/local/bin/{scriptreplay,auditshel,auditshell_create_sessionfiles}
+chown root:root \
+         /usr/local/bin/{scriptreplay,auditshell,auditshell_create_sessionfiles}
+chmod 755 \
+         /usr/local/bin/{scriptreplay,auditshel,auditshell_create_sessionfiles}
    ```
  * Patch an install custom "script" implementation
    ```
@@ -159,7 +163,8 @@ Watch auditshell sessions
    ```
  * Replay session
    ```
-scriptreplay -t /tmp/foo/2013-09-11_18-47-45.user1.11931.timing /tmp/foo/2013-09-11_18-47-45.user1.11931.typescript
+scriptreplay -t /tmp/foo/2013-09-11_18-47-45.user1.11931.timing \
+                /tmp/foo/2013-09-11_18-47-45.user1.11931.typescript
    ```
 
 
