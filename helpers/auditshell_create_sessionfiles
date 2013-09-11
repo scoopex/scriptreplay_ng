@@ -1,0 +1,44 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+use FileHandle;
+
+my $file = shift();
+my $dir = shift();
+
+if ( (!defined $file) || (!defined $file) ){
+   print "auditshell_create_sessionfiles <logfile> <dir>\n";
+   exit(1);
+}
+
+open( INFILE, "<$file" ) || die "input-file '$file' could not be opened";
+
+my $fdcache = {};
+
+while (my $zeile = <INFILE>) {
+   if ($zeile =~m /auditshell\.(typescript|timing)\.(.*?): (.*)$/){
+      chomp($zeile);
+      my $type = $1;
+      my $ident = $2;
+      my $line = $3;
+
+      if ( !exists $fdcache->{$ident}){
+         $fdcache->{$ident} = {};
+         print "Open $ident.typescript\n";
+         $fdcache->{$ident}->{typescript} = FileHandle->new("> $ident.typescript");
+         print "Open $ident.timing\n";
+         $fdcache->{$ident}->{timing} = FileHandle->new("> $ident.timing");
+      }
+
+      my $fd = $fdcache->{$ident}->{$type};
+      print $fd $line."\n";
+   }
+}
+
+close(INFILE);
+
+foreach my $ident(keys %{$fdcache}){
+   close $fdcache->{$ident}->{typescript};
+   close $fdcache->{$ident}->{timing};
+}

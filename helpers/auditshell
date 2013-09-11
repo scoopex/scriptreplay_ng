@@ -1,0 +1,21 @@
+#!/bin/bash
+
+IDENT="`date --date="today" "+%Y-%m-%d_%H-%M-%S"`.`whoami`.$$"
+
+TYPESCRIPT="auditshell.typescript.${IDENT}"
+TIMING="auditshell.timing.${IDENT}"
+
+export SHELL=/bin/bash
+
+cat <<EOF
+    _   _   _ ____ ___ _____ ____  _   _ _____ _     _     
+   / \ | | | |  _ \_ _|_   _/ ___|| | | | ____| |   | |    
+  / _ \| | | | | | | |  | | \___ \| |_| |  _| | |   | |    
+ / ___ \ |_| | |_| | |  | |  ___) |  _  | |___| |___| |___ 
+/_/   \_\___/|____/___| |_| |____/|_| |_|_____|_____|_____|
+   
+
+NOTE: This shell session will be recorded                                                         
+EOF
+
+exec /usr/local/bin/script -d -f -q -t 5 5> >(logger -t $TYPESCRIPT)  2> >(logger -t $TIMING)
