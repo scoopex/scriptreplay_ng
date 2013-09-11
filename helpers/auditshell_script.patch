@@ -1,0 +1,94 @@
+diff --git a/term-utils/script.c b/term-utils/script.c
+index 242b815..778fbbe 100644
+--- a/term-utils/script.c
++++ b/term-utils/script.c
+@@ -101,12 +101,14 @@ int	l;
+ char	line[] = "/dev/ptyXX";
+ #endif
+ int	aflg = 0;
++int	dflg = 0;
+ char	*cflg = NULL;
+ int	eflg = 0;
+ int	fflg = 0;
+ int	qflg = 0;
+ int	tflg = 0;
+ int	forceflg = 0;
++int   fdnum_typescript = 0; 
+ 
+ int die;
+ int resized;
+@@ -171,6 +173,7 @@ main(int argc, char **argv) {
+ 		{ "force",	no_argument,	   NULL, FORCE_OPTION, },
+ 		{ "quiet",	no_argument,	   NULL, 'q' },
+ 		{ "timing",	optional_argument, NULL, 't' },
++		{ "descriptor",	no_argument,	   NULL, 'd' },
+ 		{ "version",	no_argument,	   NULL, 'V' },
+ 		{ "help",	no_argument,	   NULL, 'h' },
+ 		{ NULL,		0, NULL, 0 }
+@@ -182,8 +185,10 @@ main(int argc, char **argv) {
+ 	textdomain(PACKAGE);
+ 	atexit(close_stdout);
+ 
+-	while ((ch = getopt_long(argc, argv, "ac:efqt::Vh", longopts, NULL)) != -1)
++	while ((ch = getopt_long(argc, argv, "dac:efqt::Vh", longopts, NULL)) != -1)
+ 		switch(ch) {
++		case 'd':
++         dflg = 1;
+ 		case 'a':
+ 			aflg = 1;
+ 			break;
+@@ -229,7 +234,22 @@ main(int argc, char **argv) {
+ 		fname = DEFAULT_OUTPUT;
+ 		die_if_link(fname);
+ 	}
+-	if ((fscript = fopen(fname, aflg ? "a" : "w")) == NULL) {
++
++
++   if (dflg == 1){
++
++      fdnum_typescript = atoi(fname);
++
++      if (fdnum_typescript == 0){
++         warn(_("file descriptor is not a number"));
++         fail();
++      }
++
++      if ((fscript = fdopen (fdnum_typescript, "w")) == NULL) {
++         warn(_("cannot open fd %s"), fname);
++         fail();
++      }
++   }else if((fscript = fopen(fname, aflg ? "a" : "w")) == NULL) {
+ 		warn(_("cannot open %s"), fname);
+ 		fail();
+ 	}
+@@ -239,8 +259,13 @@ main(int argc, char **argv) {
+ 		shell = _PATH_BSHELL;
+ 
+ 	getmaster();
+-	if (!qflg)
++
++	if ((!qflg) && (dflg == 1)){
++		printf(_("Script started, file descriptor number is %s\n"), fname);
++   }else{
+ 		printf(_("Script started, file is %s\n"), fname);
++   }
++
+ 	fixtty();
+ 
+ #ifdef HAVE_LIBUTEMPTER
+@@ -495,8 +520,14 @@ done(void) {
+ 		master = -1;
+ 	} else {
+ 		tcsetattr(STDIN_FILENO, TCSADRAIN, &tt);
+-		if (!qflg)
++
++      if ((!qflg) && (dflg == 1)){
++         printf(_("Script done, file descriptor number is %s\n"), fname);
++      }else{
+ 			printf(_("Script done, file is %s\n"), fname);
++      }
++
++
+ #ifdef HAVE_LIBUTEMPTER
+ 		if (master >= 0)
+ 			utempter_remove_record(master);
