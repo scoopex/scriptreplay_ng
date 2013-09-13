@@ -2,52 +2,26 @@ scriptreplay_ng
 ===============
 
 Scriptreplay can be used to replay recorded session recorded by the linux/unix "script" tool.
+This project also provides tools to setup auditable shell sessions.
 
-
-
-Installation of an audit shell
-------------------------------
-
-The following instructions describe the procedure how to install a audit shell in combination with
-the scriptreplay utility.
-Auditshell submits the typescript and the timings to syslog which prevents modification by terminal users.
-The logged information can also be forwared to secured logging servers using standard syslog logfile distribution.
-
- * Install the following tools to /usr/local/bin
-   scriptreplay
-   helpers/auditshell
-   helpers/auditshell_create_sessionfiles
-   chown root:root /usr/local/bin/{scriptreplay,auditshell,auditshell_create_sessionfiles}
-   chmod 755 /usr/local/bin/{scriptreplay,auditshel,auditshell_create_sessionfiles}
- * Patch an install custom "script" implementation
-   cd helpers/
-   git clone git://git.kernel.org/pub/scm/utils/util-linux/util-linux.git
-   cd util-linux.git
-   patch -p0 < ../auditshell_script.patch
-   ./autogen.sh
-   make
-   cp script /usr/local/bin/
-   chown root:root /usr/local/bin/script
-   chmod 755 /usr/local/bin/script
- * If you like:
-    * Disable string escaping on system which are using rsyslogd (i.e. Ubuntu systems)
-    * Redirect the auditshell logs to another logfile using syslog configuration 
- * Change shell of user
-   chsh -s /usr/local/bin/auditshell <user>
-
+{:toc}
 
 Usage
 -----
 
- * Start session, and execute commands
- * Extract session files
-   /usr/local/bin/auditshell_create_sessionfiles /var/log/messages /tmp/foo
- * Replay session
-   ```
-scriptreplay -t /tmp/foo/2013-09-11_18-47-45.user1.11931.timing /tmp/foo/2013-09-11_18-47-45.user1.11931.typescript
-   ```
+  * Record session
+    ```bash
+    script -t /tmp/foo/typescript 2> /tmp/foo/timing
+    ```
 
-Documentation 
+  * Replay session
+     ```bash
+    scriptreplay -t timing typescript
+    ```
+
+
+
+Manpage
 -------------
 
 ```
@@ -137,3 +111,67 @@ AUTHORS
 SEE ALSO
     script(1), bzcat(1), zcat(1), lzcat(1)
 ```
+
+
+Installation of "auditshell"
+------------------------------
+
+The following instructions describe the procedure how to install a audit shell in combination with
+the scriptreplay utility.
+Auditshell submits the typescript and the timings to syslog which prevents modification by terminal users.
+The logged information can also be forwarded to secured logging servers using standard syslog logfile distribution.
+
+ * Install tools
+  
+    ```bash
+    cp scriptreplay helpers/auditshell helpers/auditshell_create_sessionfiles /usr/local/bin/
+    chown root:root /usr/local/bin/{scriptreplay,auditshell,auditshell_create_sessionfiles}
+    chmod 755 /usr/local/bin/{scriptreplay,auditshell,auditshell_create_sessionfiles}
+    ```
+ * Install Build dependencies
+ 
+   ```bash
+   apt-get install libtoolize libtool autopoint pkg-config make gcc
+   zypper install libtool gettext-tools pkg-config make gcc
+   ```
+ * Patch an install custom "script" implementation
+ 
+   ```bash
+   cd helpers/
+   git clone git://git.kernel.org/pub/scm/utils/util-linux/util-linux.git
+   cd util-linux
+   patch -p1 < ../auditshell_script.patch
+   # ON SLES11SP3 systems you have to apply this additional patch
+   patch -p1 <../auditshell_aclocal.patch
+   ./autogen.sh
+   ./configure --without-ncurses --disable-nls
+   make
+   cp script /usr/local/bin/
+   chown root:root /usr/local/bin/script
+   chmod 755 /usr/local/bin/script
+   ```
+ * If you like:
+    * Disable string escaping on system which are using rsyslogd (i.e. Ubuntu systems with rsyslogd)
+    * Redirect the auditshell logs to another logfile using syslog configuration 
+ * Change shell of user
+ 
+   ```bash
+   chsh -s /usr/local/bin/auditshell <user>
+   ```
+
+
+Watch auditshell sessions
+-------------------------
+
+ * Start session, and execute commands
+ * Extract session files
+ 
+   ```bash
+   /usr/local/bin/auditshell_create_sessionfiles /var/log/messages /tmp/foo
+   ```
+ * Replay session
+
+   ```bash
+   scriptreplay -t /tmp/foo/2013-09-11_18-47-45.user1.11931.timing \
+       /tmp/foo/2013-09-11_18-47-45.user1.11931.typescript
+   ```
