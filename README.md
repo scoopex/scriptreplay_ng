@@ -134,7 +134,7 @@ The logged information can also be forwarded to secured logging servers using st
    apt-get install libtoolize libtool autopoint pkg-config make gcc
    zypper install libtool gettext-tools pkg-config make gcc
    ```
- * Patch an install custom "script" implementation
+ * Patch and install custom "script" implementation
  
    ```bash
    cd helpers/
