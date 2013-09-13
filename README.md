@@ -4,6 +4,7 @@ scriptreplay_ng
 Scriptreplay can be used to replay recorded session recorded by the linux/unix "script" tool.
 This project also provides tools to setup auditable shell sessions.
 
+{:toc}
 
 Usage
 -----
