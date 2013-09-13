@@ -121,31 +121,37 @@ the scriptreplay utility.
 Auditshell submits the typescript and the timings to syslog which prevents modification by terminal users.
 The logged information can also be forwarded to secured logging servers using standard syslog logfile distribution.
 
- * Install the following tools to /usr/local/bin
-    * scriptreplay
-    * helpers/auditshell
-    * helpers/auditshell_create_sessionfiles
- * Set permission and owner
+ * Install tools
   
     ```bash
+    cp scriptreplay helpers/auditshell helpers/auditshell_create_sessionfiles /usr/local/bin/
     chown root:root /usr/local/bin/{scriptreplay,auditshell,auditshell_create_sessionfiles}
-    chmod 755 /usr/local/bin/{scriptreplay,auditshel,auditshell_create_sessionfiles}
+    chmod 755 /usr/local/bin/{scriptreplay,auditshell,auditshell_create_sessionfiles}
     ```
+ * Install Build dependencies
+ 
+   ```bash
+   apt-get install libtoolize libtool autopoint pkg-config make gcc
+   zypper install libtool gettext-tools pkg-config make gcc
+   ```
  * Patch an install custom "script" implementation
  
    ```bash
    cd helpers/
    git clone git://git.kernel.org/pub/scm/utils/util-linux/util-linux.git
-   cd util-linux.git
-   patch -p0 < ../auditshell_script.patch
+   cd util-linux
+   patch -p1 < ../auditshell_script.patch
+   # ON SLES11SP3 systems you have to apply this additional patch
+   patch -p1 <../auditshell_aclocal.patch
    ./autogen.sh
+   ./configure --without-ncurses --disable-nls
    make
    cp script /usr/local/bin/
    chown root:root /usr/local/bin/script
    chmod 755 /usr/local/bin/script
    ```
  * If you like:
-    * Disable string escaping on system which are using rsyslogd (i.e. Ubuntu systems)
+    * Disable string escaping on system which are using rsyslogd (i.e. Ubuntu systems with rsyslogd)
     * Redirect the auditshell logs to another logfile using syslog configuration 
  * Change shell of user
  
