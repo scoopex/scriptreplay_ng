@@ -18,4 +18,4 @@ cat <<EOF
 NOTE: This shell session will be recorded                                                         
 EOF
 
-exec /usr/local/bin/script -d -f -q -t 5 5> >(logger -t $TYPESCRIPT)  2> >(logger -t $TIMING)
+exec /usr/local/bin/script -d -e -f -q -t 5 5> >(logger -t $TYPESCRIPT)  2> >(logger -t $TIMING)
