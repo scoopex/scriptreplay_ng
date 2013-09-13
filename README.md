@@ -9,14 +9,15 @@ This project also provides tools to setup auditable shell sessions.
 Usage
 -----
 
- * Record session
-```
-script -t /tmp/foo/typescript 2> /tmp/foo/timing
-```
- * Replay session
-```
-scriptreplay -t timing typescript
-```
+  * Record session
+    ```bash
+    script -t /tmp/foo/typescript 2> /tmp/foo/timing
+    ```
+
+  * Replay session
+     ```bash
+    scriptreplay -t timing typescript
+    ```
 
 
 
@@ -121,16 +122,18 @@ Auditshell submits the typescript and the timings to syslog which prevents modif
 The logged information can also be forwarded to secured logging servers using standard syslog logfile distribution.
 
  * Install the following tools to /usr/local/bin
-   * scriptreplay
-   * helpers/auditshell
-   * helpers/auditshell_create_sessionfiles
+    * scriptreplay
+    * helpers/auditshell
+    * helpers/auditshell_create_sessionfiles
  * Set permission and owner
-   ```
-   chown root:root /usr/local/bin/{scriptreplay,auditshell,auditshell_create_sessionfiles}
-   chmod 755 /usr/local/bin/{scriptreplay,auditshel,auditshell_create_sessionfiles}
-   ```
+  
+    ```bash
+    chown root:root /usr/local/bin/{scriptreplay,auditshell,auditshell_create_sessionfiles}
+    chmod 755 /usr/local/bin/{scriptreplay,auditshel,auditshell_create_sessionfiles}
+    ```
  * Patch an install custom "script" implementation
-   ```
+ 
+   ```bash
    cd helpers/
    git clone git://git.kernel.org/pub/scm/utils/util-linux/util-linux.git
    cd util-linux.git
@@ -145,7 +148,8 @@ The logged information can also be forwarded to secured logging servers using st
     * Disable string escaping on system which are using rsyslogd (i.e. Ubuntu systems)
     * Redirect the auditshell logs to another logfile using syslog configuration 
  * Change shell of user
-   ```
+ 
+   ```bash
    chsh -s /usr/local/bin/auditshell <user>
    ```
 
@@ -155,10 +159,13 @@ Watch auditshell sessions
 
  * Start session, and execute commands
  * Extract session files
-   ```
+ 
+   ```bash
    /usr/local/bin/auditshell_create_sessionfiles /var/log/messages /tmp/foo
    ```
  * Replay session
-   ```
-   scriptreplay -t /tmp/foo/2013-09-11_18-47-45.user1.11931.timing /tmp/foo/2013-09-11_18-47-45.user1.11931.typescript
+
+   ```bash
+   scriptreplay -t /tmp/foo/2013-09-11_18-47-45.user1.11931.timing \
+       /tmp/foo/2013-09-11_18-47-45.user1.11931.typescript
    ```
