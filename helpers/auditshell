@@ -2,6 +2,12 @@
 
 IDENT="`date --date="today" "+%Y-%m-%d_%H-%M-%S"`.`whoami`.$$"
 
+
+# This is a file transfer, no audit shell neccessary
+if (echo "$@"|egrep -q ".*scp.*");then
+ exec /bin/sh "$@"
+fi
+
 TYPESCRIPT="auditshell.typescript.${IDENT}"
 TIMING="auditshell.timing.${IDENT}"
 
@@ -16,6 +22,11 @@ cat <<EOF
    
 
 NOTE: This shell session will be recorded                                                         
+
+AUDIT KEY: $IDENT
+
 EOF
 
-exec /usr/local/bin/script -d -e -f -q -t 5 5> >(logger -t $TYPESCRIPT)  2> >(logger -t $TIMING)
+exec /usr/local/bin/script -d -e -f -q -t 5 \
+        5> >(base64|logger -t $TYPESCRIPT)  \
+        2> >(base64|logger -t $TIMING)
