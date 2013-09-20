@@ -132,18 +132,15 @@ The logged information can also be forwarded to secured logging servers using st
  
    ```bash
    apt-get install libtoolize libtool autopoint pkg-config make gcc
-   zypper install libtool gettext-tools pkg-config make gcc
+   zypper install libtool gettext-tools pkg-config make gcc autoconf automake
    ```
  * Patch an install custom "script" implementation
  
    ```bash
    cd helpers/
-   git clone git://git.kernel.org/pub/scm/utils/util-linux/util-linux.git
-   cd util-linux
+   wget https://www.kernel.org/pub/linux/utils/util-linux/v2.23/util-linux-2.23.tar.gz
+   cd util-linux-2.23/
    patch -p1 < ../auditshell_script.patch
-   # ON SLES11SP3 systems you have to apply this additional patch
-   patch -p1 <../auditshell_aclocal.patch
-   ./autogen.sh
    ./configure --without-ncurses --disable-nls
    make
    cp script /usr/local/bin/
