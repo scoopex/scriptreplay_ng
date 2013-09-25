@@ -150,6 +150,12 @@ The logged information can also be forwarded to secured logging servers using st
  * If you like:
     * Disable string escaping on system which are using rsyslogd (i.e. Ubuntu systems with rsyslogd)
     * Redirect the auditshell logs to another logfile using syslog configuration 
+       * Syslog-NG
+      ```bash
+      filter f_auditshell { match('^auditshell'); };
+      destination auditshell { file("/var/log/auditshell"); };
+      log { source(src); filter(f_auditshell); destination(auditshell); };
+      ```
  * Change shell of user
  
    ```bash
