@@ -139,6 +139,7 @@ The logged information can also be forwarded to secured logging servers using st
    ```bash
    cd helpers/
    wget https://www.kernel.org/pub/linux/utils/util-linux/v2.23/util-linux-2.23.tar.gz
+   tar zxvf util-linux-2.23.tar.gz
    cd util-linux-2.23/
    patch -p1 < ../auditshell_script.patch
    ./configure --without-ncurses --disable-nls

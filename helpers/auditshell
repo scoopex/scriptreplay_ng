@@ -1,6 +1,7 @@
-#!/bin/bash
+#!/bin/bash -l
 
 IDENT="`date --date="today" "+%Y-%m-%d_%H-%M-%S"`.`whoami`.$$"
+
 
 # This is a file transfer, no audit shell neccessary
 if (echo "$@"|egrep -q ".*scp.*");then
@@ -28,4 +29,5 @@ EOF
 
 /usr/local/bin/script -d -e -f -q -t 5 \
         5> >(base64|logger -t $TYPESCRIPT)  \
-        2> >(base64|logger -t $TIMING)
+        2> >(base64|logger -t $TIMING) 
+echo "Finish"
