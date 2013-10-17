@@ -1,13 +1,11 @@
+
 scriptreplay_ng
 ===============
 
 Scriptreplay can be used to replay recorded session recorded by the linux/unix "script" tool.
 This project also provides tools to setup auditable shell sessions.
 
-{:toc}
-
-Usage
------
+# Usage
 
   * Record session
     ```bash
@@ -18,11 +16,7 @@ Usage
      ```bash
     scriptreplay -t timing typescript
     ```
-
-
-
-Manpage
--------------
+# Manpage
 
 ```
 NAME
@@ -112,14 +106,16 @@ SEE ALSO
     script(1), bzcat(1), zcat(1), lzcat(1)
 ```
 
+# Auditshell
 
-Installation of "auditshell"
-------------------------------
+Auditshell submits the typescript and the timings of a patched util-linux/script binary to syslog which prevents modification by regular terminal users.
+The logged information can also be forwarded to secured logging servers using standard syslog logfile distribution.
+
+
+## Installation of "auditshell"
 
 The following instructions describe the procedure how to install a audit shell in combination with
 the scriptreplay utility.
-Auditshell submits the typescript and the timings to syslog which prevents modification by terminal users.
-The logged information can also be forwarded to secured logging servers using standard syslog logfile distribution.
 
  * Install tools
   
@@ -148,15 +144,9 @@ The logged information can also be forwarded to secured logging servers using st
    chown root:root /usr/local/bin/script
    chmod 755 /usr/local/bin/script
    ```
- * If you like:
+ * Syslog configuration:
     * Disable string escaping on system which are using rsyslogd (i.e. Ubuntu systems with rsyslogd)
     * Redirect the auditshell logs to another logfile using syslog configuration 
-       * Syslog-NG
-      ```bash
-      filter f_auditshell { match('^auditshell'); };
-      destination auditshell { file("/var/log/auditshell"); };
-      log { source(src); filter(f_auditshell); destination(auditshell); };
-      ```
  * Change shell of user
  
    ```bash
@@ -164,8 +154,7 @@ The logged information can also be forwarded to secured logging servers using st
    ```
 
 
-Watch auditshell sessions
--------------------------
+## Watch auditshell sessions
 
  * Start session, and execute commands
  * Extract session files
@@ -179,3 +168,28 @@ Watch auditshell sessions
    scriptreplay -t /tmp/foo/2013-09-11_18-47-45.user1.11931.timing \
        /tmp/foo/2013-09-11_18-47-45.user1.11931.typescript
    ```
+
+## Logging configuration
+
+### Syslog-NG Configuration
+
+
+ * Edit /etc/syslog-ng/syslog-ng.conf
+      ```
+      # define audit shell filter
+      filter f_auditshell { match('^auditshell'); };
+      # enhance existing messages filter by f_auditshell to ignore messages matched by f_auditshell
+      filter f_messages   { not facility(news, mail) and not filter(f_iptables) and not filter(f_auditshell); };
+
+      # define a log-sink for auditshell
+      destination auditshell {
+        file ("/var/log/auditshell/$YEAR-$MONTH/$FACILITY-$YEAR-$MONTH-$DAY"
+         owner(root) group(root) perm(0600) dir_perm(0700) create_dirs(yes)
+        );
+      };
+      log { source(src); filter(f_auditshell); destination(auditshell); };
+      ```
+ * Restart Syslogd
+      ```
+      /etc/init.d/syslog restart
+      ```
