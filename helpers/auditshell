@@ -2,10 +2,14 @@
 
 IDENT="`date --date="today" "+%Y-%m-%d_%H-%M-%S"`.`whoami`.$$"
 
-
 # This is a file transfer, no audit shell neccessary
-if (echo "$@"|egrep -q ".*scp.*");then
+if (echo "$@"|egrep -q "^-c.*scp.*$");then
+ logger -t auditshell.filetransfer.${IDENT} <<< "/bin/sh $@"
  exec /bin/sh "$@"
+# Remote command execution
+elif (echo "$@"|egrep -q "^-c.*$");then
+ logger -t auditshell.remotecommand.${IDENT} <<< "/bin/bash $@"
+ exec /bin/bash "$@"
 fi
 
 TYPESCRIPT="auditshell.typescript.${IDENT}"
