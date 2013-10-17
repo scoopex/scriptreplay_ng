@@ -1,3 +1,31 @@
+diff --git a/term-utils/script.1 b/term-utils/script.1
+index 1e430d8..1808a37 100644
+--- a/term-utils/script.1
++++ b/term-utils/script.1
+@@ -84,14 +84,21 @@ or symbolic link.  The command will follow a symbolic link.
+ \fB\-q\fR, \fB\-\-quiet\fR
+ Be quiet.
+ .TP
+-\fB\-t\fR, \fB\-\-timing\fR[=\fIfile\fR]
+-Output timing data to standard error, or to
++\fB\-t\fR, \fB\-\-timing\fR[=\fIfile|descriptor\fR]
++Output timing data to standard error, or to a
+ .I file
++or
++.I descriptor
+ when given.  This data contains two fields, separated by a space.  The first
+ field indicates how much time elapsed since the previous output.  The second
+ field indicates how many characters were output this time.  This information
+ can be used to replay typescripts with realistic typing and output delays.
+ .TP
++\fB\-d\fR, \fB\-\-descriptor\fR
++Use this option in combination with
++.I --timing
++for using the given resource as a file descriptor number as destination for timing data
++.TP
+ \fB\-V\fR, \fB\-\-version\fR
+ Output version information and exit.
+ .TP
 diff --git a/term-utils/script.c b/term-utils/script.c
 index 242b815..778fbbe 100644
 --- a/term-utils/script.c
