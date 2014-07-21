@@ -23,6 +23,7 @@ This project also provides tools to setup auditable shell sessions.
   * Replay session
      ```bash
     scriptreplay -t timing typescript
+    scriptreplay -t ~/.script/2014-07-21/2014-07-21_09-42-46-crontab/timing.gz ~/.script/2014-07-21/2014-07-21_09-42-46-crontab/typescript.gz 
     ```
 # Manpage
 
