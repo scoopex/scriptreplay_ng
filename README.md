@@ -9,11 +9,12 @@ This project also provides tools to setup auditable shell sessions.
 
   * Installation: Add the tools "scriptreplay" and "record-script-session" to your PATH environment
     ```bash
-    cd 
+    cd ~ 
     git clone git@github.com:scoopex/scriptreplay_ng.git
     echo '$HOME/scriptreplay_ng:$PATH' >> ~/.bashrc
     exec bash
-    ```
+    ```    
+
   * Record session
     ```bash
     record-script-session
