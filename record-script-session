@@ -1,0 +1,8 @@
+#!/bin/bash
+
+FILEPREFIX="$HOME/.script/$(date '+%Y-%m-%d')/$(date '+%Y-%m-%d_%H-%M-%S')-${1:-session}"; mkdir -p $FILEPREFIX
+script -t ${FILEPREFIX}/typescript 2>${FILEPREFIX}/timing
+gzip ${FILEPREFIX}/typescript
+gzip ${FILEPREFIX}/timing
+echo -e "${FILEPREFIX}/typescript.gz\n${FILEPREFIX}/timing.gz\n"
+

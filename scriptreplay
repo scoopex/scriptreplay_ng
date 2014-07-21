@@ -51,7 +51,7 @@ sub main() {
 	# open script_file
 	open (SCRIPT, open_expr($script_file))
 		or die "Cannot open typescript file $script_file: $!\n";
-	unless (<SCRIPT> =~ /^Script.*:.*/i) {
+	unless (<SCRIPT> =~ /^S.*:.*/i) {
 		die "$script_file is not a valid typescript from script(1)\n";
 	}
 
