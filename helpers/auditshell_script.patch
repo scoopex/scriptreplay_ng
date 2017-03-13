@@ -95,10 +95,12 @@ index 242b815..778fbbe 100644
  	getmaster();
 -	if (!qflg)
 +
-+	if ((!qflg) && (dflg == 1)){
-+		printf(_("Script started, file descriptor number is %s\n"), fname);
-+   }else{
++   if (!qflg) {
++	  if (dflg == 1){
++	  	printf(_("Script started, file descriptor number is %s\n"), fname);
++     }else{
  		printf(_("Script started, file is %s\n"), fname);
++     }
 +   }
 +
  	fixtty();
@@ -110,10 +112,12 @@ index 242b815..778fbbe 100644
  		tcsetattr(STDIN_FILENO, TCSADRAIN, &tt);
 -		if (!qflg)
 +
-+      if ((!qflg) && (dflg == 1)){
-+         printf(_("Script done, file descriptor number is %s\n"), fname);
-+      }else{
++      if (!qflg) {
++        if (dflg == 1){
++           printf(_("Script done, file descriptor number is %s\n"), fname);
++        }else{
  			printf(_("Script done, file is %s\n"), fname);
++        }
 +      }
 +
 +
