@@ -5,8 +5,6 @@ scriptreplay_ng
 Scriptreplay can be used to replay recorded session recorded by the linux/unix "script" tool.
 This project also provides tools to setup auditable shell sessions.
 
-You love this project? Send a donation to the following bitcoin wallet: 1EGoDhAmaZbLazNmdZ9vDu2zYgFCKsNur5 
-
 # Usage
 
   * Installation: Add the tools "scriptreplay" and "record-script-session" to your PATH environment
