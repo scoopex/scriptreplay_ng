@@ -162,7 +162,10 @@ the scriptreplay utility.
    ```bash
    chsh -s /usr/local/bin/auditshell <user>
    ```
-
+ * Prevent regular users to change their shell
+   * Remove all shells from /etc/shells
+   * Remove all perrmissions from the the /usr/bin/chsh binary
+   * Use the FAKE_SHELL variable in /etc/login.defs
 
 ## Watch auditshell sessions
 
