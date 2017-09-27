@@ -89,7 +89,7 @@ index 242b815..778fbbe 100644
  		warn(_("cannot open %s"), fname);
  		fail();
  	}
-@@ -239,8 +259,13 @@ main(int argc, char **argv) {
+@@ -239,8 +259,15 @@ main(int argc, char **argv) {
  		shell = _PATH_BSHELL;
  
  	getmaster();
@@ -106,7 +106,7 @@ index 242b815..778fbbe 100644
  	fixtty();
  
  #ifdef HAVE_LIBUTEMPTER
-@@ -495,8 +520,14 @@ done(void) {
+@@ -495,8 +520,16 @@ done(void) {
  		master = -1;
  	} else {
  		tcsetattr(STDIN_FILENO, TCSADRAIN, &tt);
