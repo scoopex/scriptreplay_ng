@@ -1,0 +1,131 @@
+diff --git a/term-utils/script.1 b/term-utils/script.1
+index 5c366b129..33789a927 100644
+--- a/term-utils/script.1
++++ b/term-utils/script.1
+@@ -86,14 +86,21 @@ or symbolic link.  The command will follow a symbolic link.
+ Be quiet (do not write start and done messages to either standard output
+ or the typescript file).
+ .TP
+-\fB\-t\fR, \fB\-\-timing\fR[=\fIfile\fR]
+-Output timing data to standard error, or to
++\fB\-t\fR, \fB\-\-timing\fR[=\fIfile|descriptor\fR]
++Output timing data to standard error, or to a
+ .I file
++or
++.I descriptor
+ when given.  This data contains two fields, separated by a space.  The first
+ field indicates how much time elapsed since the previous output.  The second
+ field indicates how many characters were output this time.  This information
+ can be used to replay typescripts with realistic typing and output delays.
+ .TP
++\fB\-d\fR, \fB\-\-descriptor\fR
++Use this option in combination with
++.I --timing
++for using the given resource as a file descriptor number as destination for timing data
++.TP
+ \fB\-V\fR, \fB\-\-version\fR
+ Display version information and exit.
+ .TP
+diff --git a/term-utils/script.c b/term-utils/script.c
+index d1ef07203..4b56b671d 100644
+--- a/term-utils/script.c
++++ b/term-utils/script.c
+@@ -116,7 +116,8 @@ struct script_control {
+ #endif
+ 	unsigned int
+ 	 append:1,		/* append output */
+-	 rc_wanted:1,		/* return child exit value */
++	 tsdesc:1,     /* output typescript to file descriptor */
++	 rc_wanted:1,	/* return child exit value */
+ 	 flush:1,		/* flush after each write */
+ 	 quiet:1,		/* suppress most output */
+ 	 timing:1,		/* include timing file */
+@@ -169,6 +170,7 @@ static void __attribute__((__noreturn__)) usage(FILE *out)
+ 		"     --force             use output file even when it is a link\n"
+ 		" -q, --quiet             be quiet\n"
+ 		" -t, --timing[=<file>]   output timing data to stderr (or to FILE)\n"
++		" -d, --descriptor[=<n>]  output timing data to a defined descriptor number\n"
+ 		" -V, --version           output version information and exit\n"
+ 		" -h, --help              display this help and exit\n\n"), out);
+ 
+@@ -195,8 +197,14 @@ static void __attribute__((__noreturn__)) done(struct script_control *ctl)
+ 
+ 	if (ctl->isterm)
+ 		tcsetattr(STDIN_FILENO, TCSADRAIN, &ctl->attrs);
+-	if (!ctl->quiet && ctl->typescriptfp)
+-		printf(_("Script done, file is %s\n"), ctl->fname);
++	if (!ctl->quiet && ctl->typescriptfp) {
++        if (ctl->tsdesc == 1) {
++           printf(_("Script done, file descriptor number is %s\n"), ctl->fname);
++        }else{
++  			  printf(_("Script done, file is %s\n"), ctl->fname);
++        }
++	}
++
+ #ifdef HAVE_LIBUTEMPTER
+ 	if (ctl->master >= 0)
+ 		utempter_remove_record(ctl->master);
+@@ -407,6 +415,7 @@ static void do_io(struct script_control *ctl)
+ 	int ret, ignore_stdin = 0, eof = 0;
+ 	time_t tvec = script_time((time_t *)NULL);
+ 	char buf[128];
++	int fdnum_typescript = 0; 
+ 	enum {
+ 		POLLFD_SIGNAL = 0,
+ 		POLLFD_MASTER,
+@@ -420,7 +429,18 @@ static void do_io(struct script_control *ctl)
+ 	};
+ 
+ 
+-	if ((ctl->typescriptfp =
++
++  if (ctl->tsdesc == 1){
++      fdnum_typescript = atoi(ctl->fname);
++      if (fdnum_typescript == 0){
++         warn(_("file descriptor is not a number"));
++         fail(ctl);
++      }
++      if ((ctl->typescriptfp = fdopen (fdnum_typescript, "w")) == NULL) {
++         warn(_("cannot open fd %s"), ctl->fname);
++         fail(ctl);
++      }
++	}else if ((ctl->typescriptfp =
+ 	     fopen(ctl->fname, ctl->append ? "a" UL_CLOEXECSTR : "w" UL_CLOEXECSTR)) == NULL) {
+ 		warn(_("cannot open %s"), ctl->fname);
+ 		fail(ctl);
+@@ -678,6 +698,7 @@ int main(int argc, char **argv)
+ 		{"force", no_argument, NULL, FORCE_OPTION,},
+ 		{"quiet", no_argument, NULL, 'q'},
+ 		{"timing", optional_argument, NULL, 't'},
++		{"descriptor", no_argument, NULL, 'd' },
+ 		{"version", no_argument, NULL, 'V'},
+ 		{"help", no_argument, NULL, 'h'},
+ 		{NULL, 0, NULL, 0}
+@@ -698,8 +719,10 @@ int main(int argc, char **argv)
+ 
+ 	script_init_debug();
+ 
+-	while ((ch = getopt_long(argc, argv, "ac:efqt::Vh", longopts, NULL)) != -1)
++	while ((ch = getopt_long(argc, argv, "dac:efqt::Vh", longopts, NULL)) != -1)
+ 		switch (ch) {
++		case 'd':
++			ctl.tsdesc = 1;
+ 		case 'a':
+ 			ctl.append = 1;
+ 			break;
+@@ -748,8 +771,13 @@ int main(int argc, char **argv)
+ 		ctl.shell = _PATH_BSHELL;
+ 
+ 	getmaster(&ctl);
+-	if (!ctl.quiet)
+-		printf(_("Script started, file is %s\n"), ctl.fname);
++	if (!ctl.quiet) {
++		if (ctl.tsdesc == 1) {
++			printf(_("Script started, file descriptor number is %s\n"), ctl.fname);
++		}else{
++			printf(_("Script started, file is %s\n"), ctl.fname);
++		}
++   }
+ 	fixtty(&ctl);
+ 
+ #ifdef HAVE_LIBUTEMPTER
