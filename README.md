@@ -118,91 +118,43 @@ SEE ALSO
 
 # Auditshell
 
-Auditshell submits the typescript and the timings of a patched util-linux/script binary to syslog which prevents modification by regular terminal users.
-The logged information can also be forwarded to secured logging servers using standard syslog logfile distribution.
-
+Auditshell replaces bash by audited replacement which writes scriptreplay data to /var/log/auditshell. 
+The apparmor profile prevents audited users to read, change or delete the recorded sessions and to change thei shell.
 
 ## Installation of "auditshell"
 
 The following instructions describe the procedure how to install a audit shell in combination with
 the scriptreplay utility.
 
- * Install tools
-  
-    ```bash
-    cp scriptreplay helpers/auditshell helpers/auditshell_create_sessionfiles /usr/local/bin/
-    chown root:root /usr/local/bin/{scriptreplay,auditshell,auditshell_create_sessionfiles}
-    chmod 755 /usr/local/bin/{scriptreplay,auditshell,auditshell_create_sessionfiles}
-    ```
- * Install Build dependencies
- 
-   ```bash
-   apt-get install libtoolize libtool autopoint pkg-config make gcc
-   zypper install libtool gettext-tools pkg-config make gcc autoconf automake
+ * Install the tools and the apparmor configuration
    ```
- * Patch and install custom "script" implementation
- 
-   ```bash
-   cd helpers/
-   wget https://www.kernel.org/pub/linux/utils/util-linux/v2.23/util-linux-2.23.tar.gz
-   tar zxvf util-linux-2.23.tar.gz
-   cd util-linux-2.23/
-   patch -p1 < ../auditshell_script.patch
-   ./configure --without-ncurses --disable-nls
-   make
-   cp script /usr/local/bin/
-   chown root:root /usr/local/bin/script
-   chmod 755 /usr/local/bin/script
+   cp scriptreplay helpers/auditshell /usr/local/bin/
+   cp helpers/usr.local.bin.auditshell /etc/apparmor.d/usr.local.bin.auditshell
+   chmod 755 /usr/local/bin/auditshell /usr/local/bin/scriptreplay
+   chown root:root /usr/local/bin/auditshell /usr/local/bin/scriptreplay
    ```
- * Syslog configuration:
-    * Disable string escaping on system which are using rsyslogd (i.e. Ubuntu systems with rsyslogd)
-    * Redirect the auditshell logs to another logfile using syslog configuration 
- * Change shell of user
- 
-   ```bash
+ * Create a directory for auditfiles
+   ```
+   mkdir /var/log/auditshell/
+   chmod 1777 /var/log/auditshell/
+   ```
+ * Enable apparmor profle
+   ```
+   aa-enforce /usr/local/bin/auditshell
+   ```
+ * Change shell of user which should be audited
+   ```
    chsh -s /usr/local/bin/auditshell <user>
    ```
- * Prevent regular users to change their shell
-   * Remove all shells from /etc/shells
-   * Remove all perrmissions from the the /usr/bin/chsh binary
-   * Use the FAKE_SHELL variable in /etc/login.defs
 
 ## Watch auditshell sessions
 
- * Start session, and execute commands
- * Extract session files
- 
-   ```bash
-   /usr/local/bin/auditshell_create_sessionfiles /var/log/messages /tmp/foo
+ * Identify a session 
    ```
- * Replay session
-
-   ```bash
-   scriptreplay -t /tmp/foo/2013-09-11_18-47-45.user1.11931.timing \
-       /tmp/foo/2013-09-11_18-47-45.user1.11931.typescript
+   cd /var/log/auditshell
+   ls -1d *
    ```
-
-## Logging configuration
-
-### Syslog-NG Configuration
-
-
- * Edit /etc/syslog-ng/syslog-ng.conf
-      ```
-      # define audit shell filter
-      filter f_auditshell { match('^auditshell'); };
-      # enhance existing messages filter by f_auditshell to ignore messages matched by f_auditshell
-      filter f_messages   { not facility(news, mail) and not filter(f_iptables) and not filter(f_auditshell); };
-
-      # define a log-sink for auditshell
-      destination auditshell {
-        file ("/var/log/auditshell/$YEAR-$MONTH/$FACILITY-$YEAR-$MONTH-$DAY"
-         owner(root) group(root) perm(0600) dir_perm(0700) create_dirs(yes)
-        );
-      };
-      log { source(src); filter(f_auditshell); destination(auditshell); };
-      ```
- * Restart Syslogd
-      ```
-      /etc/init.d/syslog restart
-      ```
+ * View a session
+   ```
+   scriptreplay -t 2017-10-21_10-19-17.marc.2159/timing* -s 2017-10-21_10-19-17.marc.2159/typescript*
+   ```

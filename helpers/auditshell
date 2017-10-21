@@ -2,6 +2,11 @@
 
 IDENT="`date --date="today" "+%Y-%m-%d_%H-%M-%S"`.`whoami`.$$"
 
+LOGDIR="/var/log/auditshell/${IDENT}"
+TYPESCRIPT="${LOGDIR}/typescript.${IDENT}"
+TIMING="${LOGDIR}/timing.${IDENT}"
+
+
 # This is a file transfer, no audit shell neccessary
 if (echo "$@"|egrep -q "^-c.*scp.*$");then
  logger -t auditshell.filetransfer.${IDENT} <<< "/bin/sh $@"
@@ -12,8 +17,18 @@ elif (echo "$@"|egrep -q "^-c.*$");then
  exec /bin/bash "$@"
 fi
 
-TYPESCRIPT="auditshell.typescript.${IDENT}"
-TIMING="auditshell.timing.${IDENT}"
+
+if [ "$AUDITSHELL" ];then
+   echo "INFO: already in a auditshell session"
+   exit 1
+fi
+
+mkdir $LOGDIR
+RET="$?"
+if [ "$RET" != "0" ];then
+   echo "ERROR: Creation of dir '$LOGDIR' failed, exitcode $RET"
+   exit 1
+fi 
 
 export SHELL=/bin/bash
 
@@ -31,7 +46,10 @@ AUDIT KEY: $IDENT
 
 EOF
 
-/usr/local/bin/script -d -e -f -q -t 5 \
-        5> >(base64|logger -t $TYPESCRIPT)  \
-        2> >(base64|logger -t $TIMING) 
-echo "Finish"
+export AUDITSHELL="$IDENT"
+umask 0077
+logger -t auditshell.session.${IDENT} <<< "Starting auditshell session for user $USER"
+script -f -e -q --timing=$TIMING $TYPESCRIPT -c "/bin/bash -l"
+logger -t auditshell.session.${IDENT} <<< "Finished auditshell session for user $USER"
+
+echo "AUDITSHELL FINISHED"

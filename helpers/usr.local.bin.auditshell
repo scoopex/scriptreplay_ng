@@ -1,0 +1,41 @@
+
+# Apparmor profile for the auditshell
+
+#include<tunables/global>
+
+/usr/local/bin/auditshell {
+
+   #include <abstractions/base>
+
+   /**           lrwix,
+
+   /bin/bash    cx,
+
+   profile /bin/bash {
+     #include <abstractions/base>
+     #include <abstractions/bash>
+
+     network     inet tcp,
+     /**           lrwix,
+
+	  # TCP/UDP network access
+	  network inet  stream,
+	  network inet6 stream,
+	  network inet  dgram,
+	  network inet6 dgram,
+     network netlink raw,
+
+     deny /usr/bin/chsh lrwx,
+     deny /var/log/auditshell/  lrwx,
+     deny /var/log/auditshell/**  lrwx,
+
+
+     #include <abstractions/dbus-strict>
+#     dbus send
+#       bus=system
+#       path="/org/freedesktop/resolve1"
+#       interface="org.freedesktop.resolve1.Manager"
+#       member="Resolve{Address,Hostname,Record,Service}"
+#       peer=(name="org.freedesktop.resolve1"),
+     }
+}
