@@ -1,4 +1,3 @@
-
 # Apparmor profile for the auditshell
 
 #include<tunables/global>
@@ -18,12 +17,14 @@
      network     inet tcp,
      /**           lrwix,
 
-	  # TCP/UDP network access
-	  network inet  stream,
-	  network inet6 stream,
-	  network inet  dgram,
-	  network inet6 dgram,
+     # TCP/UDP network access
+     network inet  stream,
+     network inet6 stream,
+     network inet  dgram,
+     network inet6 dgram,
      network netlink raw,
+
+     /usr/local/bin/auditshell-sessions    cx,
 
      deny /usr/bin/chsh lrwx,
      deny /var/log/auditshell/  lrwx,
@@ -37,5 +38,17 @@
 #       interface="org.freedesktop.resolve1.Manager"
 #       member="Resolve{Address,Hostname,Record,Service}"
 #       peer=(name="org.freedesktop.resolve1"),
+
      }
+
+
+   profile /usr/local/bin/auditshell-sessions {
+     #include <abstractions/base>
+     #include <abstractions/bash>
+     /**           lrwix,
+     /var/log/auditshell/  lrix,
+     /var/log/auditshell/**  lrix,
+     deny /usr/bin/chsh lrwx,
+   }
+
 }
