@@ -122,5 +122,5 @@ In former times there was was a patch for [util-linux](https://github.com/karelz
 (you can find this at tag [before-auditshell-removal](https://github.com/scoopex/scriptreplay_ng/releases/tag/before-auditshell-removal))
 
 There is a new attemt to implement this by using the [apparmor security framework](http://wiki.apparmor.net/index.php/Main_Page).
-Review the [Bastion Host Guthub Project](https://github.com/scoopex/puppet-bastion_host) which utilizes the "scriptreplay" implementation of this repository.
+Review the [Bastion Host GitHub Project](https://github.com/scoopex/puppet-bastion_host) which utilizes the "scriptreplay" implementation of this repository.
 
