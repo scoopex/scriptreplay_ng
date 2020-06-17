@@ -20,7 +20,7 @@ This project also provides tools to setup auditable shell sessions.
     record-script-session
     record-script-session "<sessioname>"
     ```
-  * Record session
+  * Stop session record
     ```bash
     exit
     ```
