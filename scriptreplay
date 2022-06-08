@@ -137,7 +137,7 @@ sub main() {
 			$accel = 1 if $key =~ /=|n/i;
 			last REPLAY   if $key =~ /q|f/i;
 			if ($key =~ /s|p/i) {
-				while (ReadKey(0) =~ /c/i) { next; }
+				while (ReadKey(0) !~ /c/i) { next; }
 			}
 		}
 
